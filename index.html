@@ -602,7 +602,7 @@ function __TMSItemEditor({item,onSave,label}){
  const [draft,setDraft]=(0,_.useState)(item);(0,_.useEffect)(()=>setDraft(item),[item]);
  return (0,$.jsx)(ZM.TextArea,{value:draft,autoSize:{minRows:1,maxRows:5},"aria-label":label,onChange:event=>setDraft(event.target.value),onBlur:()=>onSave(draft),onKeyDown:event=>{if(event.key===`Enter`&&!event.shiftKey){event.preventDefault();event.currentTarget.blur()}}});
 }
-function __TMSDropoffEditor({dropoff,onUpdate}){
+function __TMSDropoffEditor({dropoff,onUpdate,trip}){
  const model=__tmsItemModel(dropoff),total=__tmsLineQuantity(dropoff.qty??dropoff.quantity??dropoff.displayQty);
  function updateItem(index,changes){
   const rows=model.rows.map((row,i)=>i===index?{...row,...changes}:row),row=rows[index];
@@ -611,9 +611,9 @@ function __TMSDropoffEditor({dropoff,onUpdate}){
   if(row.usesDropoffQuantity&&changes.quantity!==undefined)Object.assign(patch,__tmsQuantityPatch(dropoff,row.quantity,row.unit));
   onUpdate(patch);
  }
- return (0,$.jsx)(`div`,{className:`tms-item-table-wrap`,children:(0,$.jsxs)(`table`,{className:`tms-item-table`,"aria-label":`Quantity and Items`,children:[
-  (0,$.jsx)(`thead`,{children:(0,$.jsxs)(`tr`,{children:[(0,$.jsx)(`th`,{scope:`col`,children:`SO Number`}),(0,$.jsx)(`th`,{scope:`col`,children:`Quantity`}),(0,$.jsx)(`th`,{scope:`col`,children:`Items`})]})}),
-  (0,$.jsx)(`tbody`,{children:model.rows.length?model.rows.map((row,index)=>(0,$.jsxs)(`tr`,{className:`tms-item-row`,children:[(0,$.jsx)(`td`,{className:`mono tms-item-so`,children:dropoff.soNumber||`—`}),(0,$.jsx)(`td`,{children:(0,$.jsx)(__TMSQuantityInput,{quantity:row.quantity,unit:row.unit,required:row.usesDropoffQuantity,label:`Quantity for item ${index+1}`,onSave:quantity=>updateItem(index,{quantity})})}),(0,$.jsx)(`td`,{children:(0,$.jsx)(__TMSItemEditor,{item:row.item,label:`Item ${index+1}`,onSave:item=>updateItem(index,{item})})})]},index)):(0,$.jsx)(`tr`,{children:(0,$.jsx)(`td`,{colSpan:3,children:`No items`})})}),
+ return (0,$.jsx)(`div`,{className:`tms-item-table-wrap`,children:(0,$.jsxs)(`table`,{className:`tms-item-table`,"aria-label":`Drop-off items and ePOD`,children:[
+  (0,$.jsx)(`thead`,{children:(0,$.jsxs)(`tr`,{children:[(0,$.jsx)(`th`,{scope:`col`,children:`SO Number`}),(0,$.jsx)(`th`,{scope:`col`,children:`Quantity`}),(0,$.jsx)(`th`,{scope:`col`,children:`Items`}),(0,$.jsx)(`th`,{scope:`col`,children:`ePOD`})]})}),
+  (0,$.jsx)(`tbody`,{children:model.rows.length?model.rows.map((row,index)=>(0,$.jsxs)(`tr`,{className:`tms-item-row`,children:[(0,$.jsx)(`td`,{className:`mono tms-item-so`,children:dropoff.soNumber||`—`}),(0,$.jsx)(`td`,{children:(0,$.jsx)(__TMSQuantityInput,{quantity:row.quantity,unit:row.unit,required:row.usesDropoffQuantity,label:`Quantity for item ${index+1}`,onSave:quantity=>updateItem(index,{quantity})})}),(0,$.jsx)(`td`,{children:(0,$.jsx)(__TMSItemEditor,{item:row.item,label:`Item ${index+1}`,onSave:item=>updateItem(index,{item})})}),(0,$.jsx)(`td`,{className:`tms-dropoff-epod-cell`,children:(0,$.jsx)(__TMSDropoffEpod,{dropoff,trip})})]},index)):(0,$.jsx)(`tr`,{children:(0,$.jsx)(`td`,{colSpan:4,children:`No items`})})}),
 
  ]})});
 }
@@ -1154,12 +1154,12 @@ function __TMSDropoffList({trip,onUpdate}){
  return (0,$.jsx)(`div`,{className:`tms-dropoff-table-wrap`,children:(0,$.jsxs)(`table`,{className:`tms-dropoff-table`,children:[
   (0,$.jsx)(`thead`,{children:(0,$.jsxs)(`tr`,{children:[(0,$.jsx)(`th`,{className:`tms-dropoff-expand-head`}),...columns.map(column=>(0,$.jsx)(`th`,{"aria-sort":sort.key===column.key?(sort.direction===1?`ascending`:`descending`):`none`,children:(0,$.jsxs)($.Fragment,{children:[
  (0,$.jsxs)(`button`,{type:`button`,className:`tms-table-sort`,onClick:()=>setSort(previous=>({key:column.key,direction:previous.key===column.key?-previous.direction:1})),children:[column.label,sort.key===column.key&&(0,$.jsx)(`span`,{className:`tms-sort-indicator`,children:sort.direction===1?`▲`:`▼`})]})
- ]})},column.key)),(0,$.jsx)(`th`,{children:`ePOD`})]})}),
+ ]})},column.key))]})}),
   (0,$.jsx)(`tbody`,{children:rows.map(({dropoff,index,key})=>{
    const open=expanded===key,planned=__tmsPlannedDropoffDateTime(dropoff),plannedDate=__tmsParseDate(planned),eta=__tmsDropoffEta(dropoff),color=eta&&plannedDate?__tmsEtaColor(eta,plannedDate,30):null,actual=dropoff.actualArrivalDateTime||dropoff.actualArrival||dropoff.arrivalDateTime||dropoff.arrivedAt,actualDate=__tmsParseDate(actual);
    return (0,$.jsxs)($.Fragment,{children:[
-    (0,$.jsxs)(`tr`,{className:`tms-dropoff-row`,children:[(0,$.jsx)(`td`,{className:`tms-dropoff-expand-cell`,children:(0,$.jsx)(`button`,{type:`button`,className:`tms-dropoff-expand-button`,"aria-label":`${open?`Collapse`:`Expand`} ${dropoff.destination||`drop-off`}`,"aria-expanded":open,onClick:()=>setExpanded(open?null:key),children:open?`▼`:`▶`})}),(0,$.jsx)(`td`,{className:`tms-dropoff-geofence`,children:(0,$.jsx)(__TMSGeoLocation,{name:dropoff.destination,trip:trip,record:dropoff,kind:`dropoff`})}),(0,$.jsx)(`td`,{children:plannedDate?__tmsFormatDateTime(plannedDate):planned||`—`}),(0,$.jsx)(`td`,{children:eta?__tmsEtaNode(color,__tmsFormatDateTime(eta)):`—`}),(0,$.jsx)(`td`,{children:actualDate?__tmsFormatDateTime(actualDate):actual||`—`}),(0,$.jsx)(`td`,{className:`tms-dropoff-epod-cell`,children:(0,$.jsx)(__TMSDropoffEpod,{dropoff,trip})})]}),
-    open&&(0,$.jsx)(`tr`,{className:`tms-dropoff-expanded`,children:(0,$.jsx)(`td`,{colSpan:6,children:(0,$.jsx)(__TMSDropoffEditor,{dropoff,onUpdate:changes=>onUpdate(index,changes)})})})
+    (0,$.jsxs)(`tr`,{className:`tms-dropoff-row`,children:[(0,$.jsx)(`td`,{className:`tms-dropoff-expand-cell`,children:(0,$.jsx)(`button`,{type:`button`,className:`tms-dropoff-expand-button`,"aria-label":`${open?`Collapse`:`Expand`} ${dropoff.destination||`drop-off`}`,"aria-expanded":open,onClick:()=>setExpanded(open?null:key),children:open?`▼`:`▶`})}),(0,$.jsx)(`td`,{className:`tms-dropoff-geofence`,children:(0,$.jsx)(__TMSGeoLocation,{name:dropoff.destination,trip:trip,record:dropoff,kind:`dropoff`})}),(0,$.jsx)(`td`,{children:plannedDate?__tmsFormatDateTime(plannedDate):planned||`—`}),(0,$.jsx)(`td`,{children:eta?__tmsEtaNode(color,__tmsFormatDateTime(eta)):`—`}),(0,$.jsx)(`td`,{children:actualDate?__tmsFormatDateTime(actualDate):actual||`—`})]}),
+    open&&(0,$.jsx)(`tr`,{className:`tms-dropoff-expanded`,children:(0,$.jsx)(`td`,{colSpan:5,children:(0,$.jsx)(__TMSDropoffEditor,{dropoff,onUpdate:changes=>onUpdate(index,changes),trip})})})
    ]},key);
   })})
  ]})});
