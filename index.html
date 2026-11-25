@@ -845,10 +845,7 @@ function __TMSDispatchTripTable({trips,role,hauler,onOpenTrip,onRefresh,refreshi
   ]})},
   {title:`ROUTE`,key:`route`,width:190,render:(value,trip)=>(0,$.jsx)(__TMSRouteCell,{trip,showGeofenceWarnings:false})},
   {title:`PLANNED PICKUP`,key:`pickup`,width:170,render:(value,trip)=>(0,$.jsx)(`span`,{className:`mono`,children:formatTime(trip.plannedPickupDateTime)})},
-  {title:`ETA FOR PICKUP`,key:`eta`,width:190,render:(value,trip)=>(0,$.jsxs)(`div`,{children:[
-   (0,$.jsx)(`div`,{className:`cell-title`,children:(()=>{const eta=__tmsPickupEta(trip);return eta?__tmsFormatDateTime(eta):trip.etaMinutes!=null?`${trip.etaMinutes} min`:`—`})()}),
-   (0,$.jsx)(`div`,{className:`cell-sub`,children:trip.status===`WAITING_FOR_CONFIRMATION`?`Confirm until ${__tmsConfirmationExpiry(trip)}`:trip.status===`PENDING_VEHICLE`?`Assign until ${__tmsVehicleAssignmentExpiry(trip)}`:`—`})
-  ]})},
+  {title:`ETA FOR PICKUP`,key:`eta`,width:190,render:(value,trip)=>(0,$.jsx)(`div`,{className:`cell-title`,children:(()=>{const eta=__tmsPickupEta(trip);return eta?__tmsFormatDateTime(eta):trip.etaMinutes!=null?`${trip.etaMinutes} min`:`—`})()})},
   {title:`HAULER / VEHICLE`,key:`haulerVehicle`,width:245,render:(value,trip)=>(0,$.jsxs)(`div`,{className:`tms-dispatch-table-assignment`,children:[
    (0,$.jsx)(`div`,{className:`cell-title`,children:trip.status===`CREATED`?`—`:trip.hauler||`—`}),
    (0,$.jsx)(`div`,{className:`cell-sub mono`,children:trip.status===`CREATED`?`Vehicle: —`:`Vehicle: ${trip.vehicle||`—`}`}),
@@ -856,6 +853,8 @@ function __TMSDispatchTripTable({trips,role,hauler,onOpenTrip,onRefresh,refreshi
   ]})},
   {title:`STATUS`,key:`status`,width:220,render:(value,trip)=>(0,$.jsxs)(`div`,{className:`tms-dispatch-table-status`,children:[
    (0,$.jsx)(__TMSPlanningStatus,{value:trip.cancellationRequested?`CANCELLATION_REQUESTED`:trip.status}),
+   trip.status===`WAITING_FOR_CONFIRMATION`&&(0,$.jsxs)(QV,{type:trip.confirmationTimedOut?`danger`:`secondary`,style:{fontSize:12},children:[(0,$.jsx)(zA,{}),` `,`Confirm until ${__tmsConfirmationExpiry(trip)}`]}),
+   trip.status===`PENDING_VEHICLE`&&(0,$.jsxs)(QV,{type:trip.vehicleAssignmentExpired?`danger`:`secondary`,style:{fontSize:12},children:[(0,$.jsx)(zA,{}),` `,`Assign until ${__tmsVehicleAssignmentExpiry(trip)}`]}),
    trip.lateDispatch&&(0,$.jsx)(`span`,{className:`tms-dispatch-table-late`,children:`⚑ Late Dispatch`}),
    tripActionError?.id===trip.id&&(0,$.jsx)(`div`,{className:`tms-dispatch-table-action-error`,role:`alert`,children:tripActionError.message})
   ]})},
