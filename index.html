@@ -517,7 +517,14 @@ function __tmsConfirmationExpiry(trip){const deadline=Number(trip.confirmationDe
 function __tmsIsForAllocation(trip){return !!trip&&trip.status===`CREATED`&&!trip.cancellationRequested&&!trip.manualAllocationActive&&!trip.vehicle}
 function __tmsNeedsManualAllocation(trip){return __tmsIsForAllocation(trip)&&(!!trip.manualHaulerSelectionUnlocked||!!trip.allHaulersDeclined||!!trip.manualOnlyAfterCancellation)}
 function __tmsUniqueTripCount(trips){return new Set(trips.map(trip=>trip.id)).size}
+function __tmsPlanningSegmentsDisabled(kpiKey,selectedKpiIds){
+ const enabledKeys=new Set(kpiKey===`ALL`
+  ?[`planning:ALL`,`planning:ACTIVE`,`planning:CLOSED`]
+  :[`planning:FOR_ALLOCATION`,`planning:AUTO_ALLOCATION`,`planning:MANUAL_ALLOCATION`]);
+ return Array.from(selectedKpiIds).some(id=>id.startsWith(`planning:`)&&!enabledKeys.has(id));
+}
 function __TMSPlanningKpiCard({kpi,selected,segments,selectedKpiIds,onSelect,onSegmentSelect}){
+ const segmentsDisabled=__tmsPlanningSegmentsDisabled(kpi.key,selectedKpiIds);
  return (0,$.jsxs)(`div`,{className:`kpi-card kpi-card-segmented ${selected?`active`:``}`,role:`group`,"aria-label":`${kpi.label} filters`,"data-kpi-id":kpi.id,style:{display:`flex`,flexDirection:`column`,justifyContent:`space-between`},children:[
   (0,$.jsxs)(`button`,{type:`button`,onClick:onSelect,"aria-pressed":selected,"aria-label":`${kpi.label}, ${kpi.count} trips`,style:{display:`flex`,flexDirection:`column`,flex:1,width:`100%`,minHeight:0,padding:0,border:0,background:`transparent`,font:`inherit`,textAlign:`left`,color:`inherit`,cursor:`pointer`},children:[
    selected&&(0,$.jsx)(`span`,{className:`kpi-active-indicator`,title:`Selected`}),
@@ -531,7 +538,7 @@ function __TMSPlanningKpiCard({kpi,selected,segments,selectedKpiIds,onSelect,onS
    const selected=selectedKpiIds.has(`planning:${segment.key}`);
    return[
     index>0&&(0,$.jsx)(`span`,{"aria-hidden":!0,children:`|`},`${segment.key}-separator`),
-    (0,$.jsx)(`button`,{type:`button`,"aria-pressed":selected,"aria-label":`Filter ${segment.label.toLowerCase()} trips: ${segment.count}`,onClick:()=>onSegmentSelect(segment.key),style:{padding:0,border:0,background:`transparent`,font:`inherit`,color:selected?`#875012`:`inherit`,fontWeight:selected?650:500,textDecoration:selected?`underline`:undefined,whiteSpace:`nowrap`,cursor:`pointer`},children:`${segment.label} (${segment.count})`},segment.key)
+    (0,$.jsx)(`button`,{type:`button`,disabled:segmentsDisabled,"aria-pressed":selected,"aria-label":`Filter ${segment.label.toLowerCase()} trips: ${segment.count}`,onClick:()=>onSegmentSelect(segment.key),style:{padding:0,border:0,background:`transparent`,font:`inherit`,color:segmentsDisabled?`#aab2bd`:selected?`#875012`:`inherit`,fontWeight:selected?650:500,textDecoration:selected?`underline`:undefined,whiteSpace:`nowrap`,cursor:segmentsDisabled?`not-allowed`:`pointer`},children:`${segment.label} (${segment.count})`},segment.key)
    ];
   })})
  ]},kpi.id);
@@ -1649,10 +1656,20 @@ function toggleKpiSelection(kpiId){
    setShowAllTrips(false);
    setSelectedKpiIds(previous=>{
     const wasSelected=previous.has(kpiId),next=new Set(previous);
-    group.forEach(id=>next.delete(id));
+    Array.from(next).filter(id=>id.startsWith(`planning:`)).forEach(id=>next.delete(id));
     if(!wasSelected)next.add(kpiId);
     return next;
    });
+   return;
+  }
+  if(kpiId!==`planning:ALL`){
+   setSelectedKpiIds(previous=>{
+    const next=new Set(previous);
+    [`planning:ACTIVE`,`planning:CLOSED`,`planning:FOR_ALLOCATION`,`planning:AUTO_ALLOCATION`,`planning:MANUAL_ALLOCATION`].forEach(id=>next.delete(id));
+    if(next.has(kpiId))next.delete(kpiId);else next.add(kpiId);
+    return next;
+   });
+   setShowAllTrips(false);
    return;
   }
  }
