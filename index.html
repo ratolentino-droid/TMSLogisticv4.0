@@ -839,10 +839,9 @@ function __tmsGeoCheckTrip(trip,{force=false}={}){
  return task;
 }
 function __tmsCanOpenAllocationPreview(trip,role){
- // For Allocation remains visible, but is disabled if any pickup/dropoff warning is present.
  // CREATED is the stored status displayed as "For allocation" in the UI.
- // Verification is still mandatory inside the modal before an allocation can be committed.
- return (role===`DSSI`||role===`WTI_ADMIN`)&&!!trip&&trip.status===`CREATED`&&!__tmsGeoHasConfirmedMissing(trip);
+ // The preview may open with geofence warnings; committing allocation still requires verification.
+ return (role===`DSSI`||role===`WTI_ADMIN`)&&!!trip&&trip.status===`CREATED`;
 }
 function __tmsCanForAllocation(trip,role){return (role===`DSSI`||role===`WTI_ADMIN`)&&__tmsIsForAllocation(trip)&&!__tmsGeofenceBlockReason(trip)}
 // WTI Admin's Cancel action resolves a pending cancellation request by releasing the current assignment.
